@@ -4,40 +4,40 @@ import jwt from 'jsonwebtoken';
 
 class UserController {
     static userRegistration = async (req, res) => {
-        try {
-            const { name, email, password, tc } = req.body;
-            const user = await UserModel.findOne({ email: email })
-            if (user) {
-                res.send({ "status": "failed", "message": "Email already exists" });
-            } else {
-                if (name && email && password && tc) {
-                    try {
-                        const salt = await bcrypt.genSalt(12);
-                        const hashPassword = await bcrypt.hash(password, salt);
-                        const doc = new UserModel({
+    try {
+        const { name, email, password, tc } = req.body;
+        const user = await UserModel.findOne({ email: email });
+        if (user) {
+            return res.send({ "status": "failed", "message": "Email already exists" });
+        } else {
+            if (name && email && password && tc) {
+                try {
+                    const salt = await bcrypt.genSalt(12);
+                    const hashPassword = await bcrypt.hash(password, salt);
+                    const doc = new UserModel({
                         name: name,
                         email: email,
                         password: hashPassword,
-                        tc:tc
-                    })
-                        await doc.save();
-                        const saved_user = await UserModel.findOne({ email: email });
-                        //Generate JWT Token
-                        const token = jwt.sign({ userID: saved_user._id }, process.env.JWT_SECRET_KEY, {expiresIn: '5d'}); 
+                        tc: tc
+                    });
+                    await doc.save();
+                    const saved_user = await UserModel.findOne({ email: email });
+                    //Generate JWT Token
+                    const token = jwt.sign({ userID: saved_user._id }, process.env.JWT_SECRET_KEY, { expiresIn: '5d' });
 
-                        res.status(201).send({ "status": "success", "message": "registration successful", "token":token });
-                    } catch (err) {
-                        res.send({"status":"request failed"})
-                    }
-                } else {
-                    res.send({ "status": "failed", "message": "Please enter required fields" });
+                    return res.status(201).send({ "status": "success", "message": "registration successful", "token": token });
+                } catch (err) {
+                    return res.send({ "status": "failed", "message": "request failed" });
                 }
+            } else {
+                return res.send({ "status": "failed", "message": "Please enter required fields" });
             }
-            res.send(result)
-        } catch (err) {
-            res.status(401).send(err);
         }
+    } catch (err) {
+        return res.status(401).send(err);
     }
+};
+
     
     static userLogin = async (req, res) => {
         try {
